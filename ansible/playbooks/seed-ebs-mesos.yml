@@ -1,0 +1,23 @@
+# cloudWatch ec2 instances
+
+- hosts: mesos-university_mesos_slave_{{ lookup('env','DNS_ENV') }}
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name : Create volumes
+      ec2_vol:
+          instance: "{{ ec2_id }}"
+          device_name: /dev/xvdb
+          volume_size: 30
+
+- hosts: mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}
+  connection: local
+  gather_facts: true
+
+  tasks:
+    - name : Create volumes
+      ec2_vol:
+          instance: "{{ ec2_id }}"
+          device_name: /dev/xvdb
+          volume_size: 30

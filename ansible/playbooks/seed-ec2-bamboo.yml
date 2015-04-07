@@ -1,0 +1,11 @@
+# seed ec2 instances
+- hosts: seed
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - "vars/{{ lookup('env','ANSIBLE_VARS') }}.yml"
+
+
+  roles:
+    - seed-ec2-bamboo

@@ -1,0 +1,53 @@
+# seed ec2 instances
+
+- hosts: seed
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - "vars/{{ lookup('env','ANSIBLE_VARS') }}.yml"
+
+  vars:
+    bamboo:
+      group: "mesos-university_bamboo_{{ amazon.dns_env }}"
+      dns: "bamboo"
+    mesos_master:
+      group: "mesos-university_mesos_master_{{ amazon.dns_env }}"
+      dns: "mesos"
+    marathon:
+      group: "mesos-university_marathon_{{ amazon.dns_env }}"
+      dns: "marathonxx"
+
+  tasks:
+
+    - name: Registering groups in Route53
+      run_once: true
+      local_action:
+        module: route53
+        command: create
+        overwrite: true
+        zone: "{{ amazon.dns_zone }}"
+        record: "{{item.dns}}.{{ amazon.dns_env }}.{{ amazon.dns_zone }}"
+        type: A
+        value: "{% for node in groups[ item.group ] %}{{ hostvars[node].ec2_ip_address }}{% if not loop.last %},{% endif %}{% endfor %}"
+      when: "groups[ item.group ] is defined"
+      with_items:
+        - "{{bamboo}}"
+        - "{{mesos_master}}"
+        - "{{marathon}}"
+
+    - name: Registering Bamboo alias in Route53
+      run_once: true
+      local_action:
+        module: route53
+        command: create
+        overwrite: true
+        zone: "{{ amazon.dns_zone }}"
+        record: "{{item}}.{{ amazon.dns_env }}.{{ amazon.dns_zone }}"
+        type: CNAME
+        value: "bamboo.{{ amazon.dns_env }}.{{ amazon.dns_zone }}"
+      with_items:
+        - "influxdb"
+        - "playapp"
+        - "grafana"
+        - "chronos"

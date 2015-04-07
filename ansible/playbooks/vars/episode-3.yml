@@ -1,0 +1,33 @@
+keypair: devoxx-mesos-university
+keypair_local_path: ~/.ssh/devoxx-mesos-university.pem
+
+timezone: "Europe/Paris"
+
+mesos:
+  quorum: 2
+
+zookeeper:
+  id: "{{ hostvars[inventory_hostname]['ansible_eth0']['ipv4']['address'].split('.')[3] }}"
+
+java_versions:
+  - oracle-java8-installer
+
+amazon:
+   vpc_id: vpc-6648a303
+   subnet_ids:
+      - subnet-3c759e4b
+      - subnet-0a935c6f
+   ami_debian_wheezy: ami-cb47c1bc
+   ami_centos_7: ami-335fd144
+   dns_zone: "{{ lookup('env','DNS_ZONE') }}"
+   dns_env: "{{ lookup('env','DNS_ENV') }}"
+   instances:
+         mesos:
+            master:
+               count: 1
+            slave:
+               count: 1
+         bamboo:
+            count: 1
+         influxdb:
+            count: 0

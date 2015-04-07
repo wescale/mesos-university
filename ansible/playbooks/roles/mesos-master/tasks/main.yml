@@ -1,0 +1,145 @@
+- debug: msg="Will use zookeeper id={{ zookeeper.id }}"
+
+- set_fact:
+    zoo_keeper_index: "{{zookeeper.id}}"
+
+- name: Install mesosphere packages
+  apt:
+    pkg="{{ item }}"
+    state=present
+    force=yes
+  with_items:
+    - mesos={{ mesos_version }}
+  tags: install
+
+- name: Set zookeeper id
+  template:
+    src=zookeeper_id.j2
+    dest=/etc/zookeeper/conf/myid
+    owner=root
+    group=root
+    mode=0644
+
+- name: Set zookeeper node mapping
+  template:
+    src=zoo.cfg.j2
+    dest=/etc/zookeeper/conf/zoo.cfg
+    backup=yes
+    owner=root
+    group=root
+    mode=0644
+  notify: Restart zookeeper
+
+
+- name: Set mesos zookeeper link
+  template:
+    src=mesos_zk.j2
+    dest=/etc/mesos/zk
+    owner=root
+    group=root
+    mode=0644
+  notify: Restart mesos-master
+
+
+- name: Configure mesos quorum
+  template:
+    src=mesos_quorum.j2
+    dest=/etc/mesos-master/quorum
+    owner=root
+    group=root
+    mode=0644
+  notify: Restart mesos-master
+
+- name: Install marathon packages
+  apt:
+    pkg="{{ item }}"
+    state=present
+    force=yes
+  with_items:
+    - marathon={{ marathon_version }}
+  tags: install
+#  when:
+#    - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+
+
+- name: Create marathon configuration directory
+  file:
+    path=/etc/marathon/conf
+    state=directory
+    owner=root
+    group=root
+    mode=0755
+#  when:
+#    - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+
+- name: Create marathon hostname files
+  template:
+    src=hostname.j2
+    dest="{{ item }}"
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - /etc/marathon/conf/hostname
+#  when:
+#    - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+- name: Create mesos hostname files
+  template:
+    src=hostname.j2
+    dest="{{ item }}"
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - /etc/mesos-master/hostname
+  notify: Restart mesos-master
+
+
+- name: Enable mesosphere services
+  service:
+    name="{{ item }}"
+    enabled=yes
+    state=started
+  with_items:
+    - zookeeper
+    - mesos-master
+  tags: service
+
+- name: Enable marathon services
+  service:
+    name="{{ item }}"
+    enabled=yes
+    state=started
+  with_items:
+    - marathon
+  tags: service
+#  when: "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+
+# PLO Begin Temporary cause crashes
+
+#- name: Deleting marathon as a service
+#  file: path=/etc/init.d/marathon state=absent
+#  when:
+#    - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+#- name: Auto respawn marathon
+#  lineinfile: dest=/etc/inittab regexp=^mrth "line=mrth:2345:respawn:/usr/bin/marathon --event_subscriber http_callback"
+#  when:
+#    - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+
+#- name: Reload init file for auto respawn of marathon
+#  shell: init q
+#  when:
+#   - "hostvars[groups[ group_name_master ][0]].ec2_ip_address==hostvars[inventory_hostname].ec2_ip_address"
+  # END Temporary cause crashes
+
+- name: Disable mesosphere unused services
+  service:
+    name=mesos-slave
+    enabled=no
+    state=stopped
+  notify: Restart mesos-master

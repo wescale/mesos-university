@@ -1,0 +1,16 @@
+# playbook for mesos masters
+- hosts: mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}
+  user: admin
+  sudo: yes
+
+  vars_files:
+    - "vars/{{ lookup('env','ANSIBLE_VARS') }}.yml"
+
+  vars:
+    group_name_master: "mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}"
+    group_name_slave: "mesos-university_mesos_slave_{{ lookup('env','DNS_ENV') }}"
+    group_name: "mesos-university_mesos_{{ lookup('env','DNS_ENV') }}"
+    episode: "{{ lookup('env','ANSIBLE_VARS') }}"
+
+  roles:
+    - mesos-master

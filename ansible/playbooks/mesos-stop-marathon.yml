@@ -1,0 +1,11 @@
+# playbook for mesos
+
+- hosts: mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}
+  user: admin
+  sudo: yes
+
+  tasks:
+    - name: Stop marathon
+      service:
+        name=marathon
+        state=stopped

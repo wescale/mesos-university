@@ -1,0 +1,52 @@
+# seed ec2 mesos instances
+
+- name: Create EC2 security groups
+  local_action:
+    module: ec2_group
+    name: "{{ item.security_group.name }}"
+    description: "{{ item.security_group.description }}"
+  with_items:
+    - "{{mesos_masters}}"
+    - "{{mesos_slaves}}"
+  tags: security
+
+- name: Apply EC2 security group rules
+  local_action:
+    module: ec2_group
+    name: "{{ item.security_group.name }}"
+    description: "{{ item.security_group.description }}"
+    rules: "{{item.security_group.rules}}"
+  with_items:
+    - "{{mesos_masters}}"
+    - "{{mesos_slaves}}"
+  tags: security
+
+- name: Create mesos instances
+  local_action:
+    module: ec2
+    key_name: "{{ keypair }}"
+    instance_type: "{{ item.type }}"
+    group: "{{ item.security_group.name }}"
+    instance_tags:
+       Client: "{{ item.client }}"
+       Name: "{{ item.client }}.{{ item.cluster_role}}"
+       ClusterRole: "{{ item.cluster_role}}"
+       Environment: "{{ amazon.dns_env }}"
+       CompleteDesignation: "{{ item.client }}_{{ item.cluster_role}}_{{ amazon.dns_env }}"
+       MesosGroup: "{{ group_name }}"
+       Software: "mesos"
+       owner: "plopez@xebia.fr"
+       sequence: "{{ lookup('env','ANSIBLE_VARS') }}"
+    image: "{{ item.ami }}"
+    wait: yes
+    exact_count: "{{ item.count }}"
+    count_tag :
+      Client: "{{ item.client }}"
+      ClusterRole: "{{ item.cluster_role}}"
+      Environment: "{{ amazon.dns_env }}"
+  register: "ec2result"
+  with_items:
+    - "{{mesos_masters}}"
+    - "{{mesos_slaves}}"
+
+- debug: msg="{{ec2result}} {{ec2result.results[0].instances|length}} {{mesos_masters.count|int}}"

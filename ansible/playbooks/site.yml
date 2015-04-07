@@ -1,0 +1,6 @@
+# master playbook
+
+- include: jenkins.yml
+- include: elasticsearch.yml
+- include: couchbase.yml
+- include: mesos.yml

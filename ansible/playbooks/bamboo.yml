@@ -1,0 +1,16 @@
+# playbook for Bamboo
+- hosts: mesos-university_bamboo_{{ lookup('env','DNS_ENV') }}
+  user: ubuntu
+  sudo: yes
+  gather_facts: true
+
+  vars_files:
+    - "vars/{{ lookup('env','ANSIBLE_VARS') }}.yml"
+
+  vars:
+    group_name_master: "mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}"
+
+  roles:
+    - all
+    - java
+    - bamboo

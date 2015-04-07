@@ -1,0 +1,13 @@
+keypair: devoxx-mesos-university
+keypair_local_path: ~/.ssh/devoxx-mesos-university.pem
+
+timezone: "Europe/Paris"
+
+amazon:
+   vpc_id: vpc-5be8343e
+   subnet_ids:
+      - subnet-61e73038
+      - subnet-2fde4b4a
+      - subnet-5aaf1d2d
+   ami_debian_wheezy: ami-187fd06f
+   ami_centos_7: ami-335fd144

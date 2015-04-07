@@ -1,0 +1,48 @@
+# playbook for mesos
+
+- hosts: mesos-university_mesos_master_{{ lookup('env','DNS_ENV') }}
+  user: admin
+  sudo: yes
+
+  tasks:
+    - name: Stop marathon
+      service:
+        name=marathon
+        state=stopped
+      ignore_errors: yes
+
+    - name: Stop mesos-master
+      service:
+        name=mesos-master
+        state=stopped
+
+    - name: Stop zookeeper
+      service:
+        name=zookeeper
+        state=stopped
+
+    - name: Restart zookeeper
+      service:
+        name=zookeeper
+        state=started
+
+    - name: Restart mesos-master
+      service:
+        name=mesos-master
+        state=started
+
+    - name: Restart marathon
+      service:
+        name=marathon
+        state=started
+      ignore_errors: yes
+
+- hosts: mesos-university_mesos_slave_{{ lookup('env','DNS_ENV') }}
+  user: admin
+  sudo: yes
+
+  tasks:
+    - name: Restart mesos-slave
+      service:
+        name=mesos-slave
+        state=restarted

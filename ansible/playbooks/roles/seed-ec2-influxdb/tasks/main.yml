@@ -1,0 +1,46 @@
+# seed ec2 jenkins instances
+
+- name: Create EC2 security groups
+  local_action:
+    module: ec2_group
+    name: "{{ item.security_group.name }}"
+    description: "{{ item.security_group.description }}"
+  with_items:
+    - "{{influxdb}}"
+  tags: security
+
+- name: Apply EC2 security group rules
+  local_action:
+    module: ec2_group
+    name: "{{ item.security_group.name }}"
+    description: "{{ item.security_group.description }}"
+    rules: "{{item.security_group.rules}}"
+    rules_egress: "{{item.security_group.rules_egress}}"
+  with_items:
+    - "{{influxdb}}"
+  tags: security
+
+- name: Create influxdb instance
+  local_action:
+    module: ec2
+    key_name: "{{ keypair }}"
+    instance_type: "{{ item.type }}"
+    group: "{{ item.security_group.name }}"
+    instance_tags:
+      Client: "{{ item.client }}"
+      Name: "{{ item.client }}.{{ item.cluster_role}}.{{ amazon.dns_env }}"
+      ClusterRole: "{{ item.cluster_role}}"
+      Environment: "{{ amazon.dns_env }}"
+      CompleteDesignation: "{{ item.client }}_{{ item.cluster_role}}_{{ amazon.dns_env }}"
+    image: "{{ item.ami }}"
+    wait: yes
+    exact_count: "{{ item.count }}"
+    count_tag :
+       Client: "{{ item.client }}"
+       ClusterRole: "{{ item.cluster_role}}"
+       Environment: "{{ amazon.dns_env }}"
+  register: "ec2result"
+  with_items:
+    - "{{influxdb}}"
+
+- debug: msg="{{ec2result.results[0].instances|length}} {{influxdb.count|int}}"

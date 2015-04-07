@@ -1,0 +1,4 @@
+---
+
+marathon_version: 0.8.1-1.0.171.debian77
+mesos_version: 0.22.0-1.0.debian78

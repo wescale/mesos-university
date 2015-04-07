@@ -1,0 +1,14 @@
+# seed ec2 instances
+
+- hosts: seed
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - "vars/{{ lookup('env','ANSIBLE_VARS') }}.yml"
+
+  vars:
+      group_name: "mesos-university_mesos_{{ amazon.dns_env }}"
+
+  roles:
+    - seed-ec2-mesos

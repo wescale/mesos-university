@@ -1,0 +1,139 @@
+- name: Check mounted volumes
+  shell: df
+  tags: mount
+  register: mount
+
+- name: Format /dev/xvdb as ext4 fs
+  command: mkfs -t ext4 /dev/xvdb
+  when: '"/dev/xvdb" not in mount.stdout'
+
+- name: Create /mnt/data directory
+  file: path=/mnt/data state=directory
+
+- name: Mount /dev/xvdb
+  command: mount /dev/xvdb /mnt/data
+  when: '"/dev/xvdb" not in mount.stdout'
+
+- name: Create /mnt/data/docker directory
+  file: path=/mnt/data/docker state=directory
+
+- name: Create symlink from /mnt/data/docker to /var/lib/docker
+  file: src=/mnt/data/docker dest=/var/lib/docker state=link force=yes
+
+- name: Add debian wheezy-backports repository for kernel update
+  apt_repository:
+    repo="deb http://http.debian.net/debian wheezy-backports main"
+    state=present
+    update-cache=yes
+  tags: install
+
+- name: Update Kernel
+  apt:
+    pkg="linux-image-amd64"
+    default_release=wheezy-backports
+    install_recommends=no
+    state=latest
+    update-cache=yes
+    cache_valid_time=3600
+  tags: install
+
+- name: Fix apt key
+  apt:
+    pkg=ca-certificates
+    state=present
+
+- name: Install apt key for docker repository
+  apt_key:
+    keyserver=hkp://keyserver.ubuntu.com:80
+    id=36A1D7869245C8950F966E92D8576A8BA88D21E9
+    state=present
+  tags: install
+
+- name: Install apt docker repository
+  apt_repository:
+    repo="deb http://get.docker.io/ubuntu docker main"
+    state=present
+  tags: install
+
+- name: Install docker
+  apt:
+    pkg=lxc-docker
+    state=present
+    update_cache=yes
+    cache_valid_time=3600
+  tags: install
+
+- name: Install mesosphere packages
+  apt:
+    pkg="{{ item }}"
+    state=present
+    update_cache=yes
+    cache_valid_time=3600
+    force=yes
+  with_items:
+    - mesos={{ mesos_version }}
+    - curl
+    - unzip
+  tags: install
+
+- name: Set mesos zookeeper link
+  template:
+    src=mesos_zk.j2
+    dest=/etc/mesos/zk
+    owner=root
+    group=root
+    mode=0644
+  notify: Clean and restart mesos-slave
+
+- name: Configure mesos slaves default
+  template:
+    src=default_mesos-slave.j2
+    dest=/etc/default/mesos-slave
+    owner=root
+    group=root
+    mode=0644
+  notify: Clean and restart mesos-slave
+
+- name: Create mesos hostname files
+  template:
+    src=hostname.j2
+    dest="{{ item }}"
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - /etc/mesos-slave/hostname
+  notify: Restart mesos-slave
+
+
+- name: Configure mesos slaves
+  template:
+    src=value_file.j2
+    dest="/etc/mesos-slave/{{ item.key }}"
+    owner=root
+    group=root
+    mode=0644
+  with_items:
+    - { key: "containerizers", value: "docker,mesos" }
+    - { key: "executor_registration_timeout", value: "5mins" }
+    - { key: "attributes", value: "rack:{{ hostvars[inventory_hostname].ec2_tag_sequence }}" }
+  notify: Clean and restart mesos-slave
+
+- name: Enable mesosphere services
+  service:
+    name=mesos-slave
+    enabled=yes
+    state=started
+
+- name: Disable mesosphere unused services
+  service:
+    name="{{ item }}"
+    enabled=no
+    state=stopped
+  with_items:
+    - mesos-master
+    - zookeeper
+
+- shell: docker pull tutum/influxdb:latest
+
+- shell: docker pull tutum/grafana:latest

@@ -1,0 +1,41 @@
+---
+# Install bamboo
+
+- name: Install ppa:vbernat/haproxy-1.5 repository
+  apt_repository: repo='ppa:vbernat/haproxy-1.5' state=present
+
+- name: Update APT
+  apt: update_cache=yes
+
+- name: Install Zookeeper
+  apt: name=zookeeperd state=latest
+
+- name: Install HAProxy
+  apt: name=haproxy state=latest
+
+- name: 'Copy HAProxy default'
+  copy: src=haproxy.default dest=/etc/default/haproxy
+
+- name: 'Copy HAProxy configuration'
+  copy: src=haproxy.cfg dest=/etc/haproxy/haproxy.cfg
+
+- name: 'Reload HAProxy'
+  service: name=haproxy enabled=yes state=restarted
+
+- name: 'Copy Bamboo debian package to host /tmp'
+  copy: src=bamboo_0.2.9-1_all.deb dest=/tmp
+
+- name: 'Install Bamboo debian package'
+  apt: deb=/tmp/bamboo_0.2.9-1_all.deb
+
+- name: 'Install Bamboo init.d script'
+  copy: src=bamboo-server.initd dest=/etc/init.d/bamboo-server owner=root group=root mode=755
+
+- name: 'Configure Bamboo'
+  template: src=production.json.j2 dest=/var/bamboo/production.json owner=bamboo group=bamboo mode=755
+
+- name: 'Copy HAProxy template'
+  copy: src=haproxy_template.cfg dest=/var/bamboo/haproxy_template.cfg
+
+- name: 'Bamboo will be launch at startup'
+  service: name=bamboo-server enabled=yes state=started

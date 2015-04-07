@@ -1,0 +1,28 @@
+---
+# handlers
+- name: Restart mesos-master
+  service:
+    name=mesos-master
+    state=restarted
+
+- name: Restart zookeeper
+  service:
+    name=zookeeper
+    state=restarted
+  notify: Restart mesos-master
+
+- name: Restart marathon
+  service:
+    name=marathon
+    state=restarted
+
+- name: Stop marathon
+  service:
+    name=marathon
+    state=stopped
+
+
+#- name: Restart Exhibitor
+#  service:
+#     name=exhibitor
+#     state=restarted

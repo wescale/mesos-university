@@ -1,0 +1,12 @@
+# Check SSH Keypair
+#- name: Check SSH Keypair 
+#  sudo: false
+#  local_action:
+#    module: ec2_key
+#    name: "{{keypair}}"
+#    key_material: "{{ item }}"
+#  with_file: keypair_local_pub_path
+
+# Configure Timezone
+- name: Configuring Timezone
+  shell: echo {{ timezone }} > /etc/timezone; dpkg-reconfigure --frontend noninteractive tzdata
