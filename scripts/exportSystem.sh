@@ -1,0 +1,10 @@
+export EC2_REGION=eu-west-1
+export AWS_ACCESS_KEY=<>
+export AWS_SECRET_KEY=<>
+export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY
+export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_KEY
+export DNS_ENV=univ
+export ANSIBLE_VARS=episode-2
+export PEM_PATH=<>
+export ANSIBLE_HOST_KEY_CHECKING=false
+export DNS_ZONE=aws.xebiatechevent.info

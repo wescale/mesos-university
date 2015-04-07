@@ -1,0 +1,1 @@
+curl devoxx.fr -s -f -o /dev/null || echo "Devoxx Fr Website down." | mail -s "Devoxx Fr Website is down" admin@devoxx.fr

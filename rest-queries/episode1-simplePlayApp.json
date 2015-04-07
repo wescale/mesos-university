@@ -1,0 +1,10 @@
+{
+  "id": "play-app-v1",
+  "cmd": "./mesosunivplayapp-1.0/bin/mesosunivplayapp -Dhttp.port=$PORT",
+  "cpus": 0.25,
+  "mem": 256.0,
+  "upgradeStrategy": {
+    "minimumHealthCapacity": 0
+  },
+  "uris":["https://s3-eu-west-1.amazonaws.com/mesos-university/mesosunivplayapp-1.0.zip"]
+}
